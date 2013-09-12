@@ -76,7 +76,7 @@ All commands follow this basic format:
 // dot separated unique name
 // commands are organized based on a tree structure
 // with the root of the tree starting on the left
-cmds['cmd.name']: {
+cmds['cmd.name'] = {
     desc: 'Description of the command',
     // if the command requires input from either command line or a previous
     // command in order to operate correctly, then set this to true, otherwise
@@ -116,5 +116,5 @@ cmds['cmd.name']: {
         windows: function(args, pipe, input, callback) {
         }
     }
-}
+};
 ```
