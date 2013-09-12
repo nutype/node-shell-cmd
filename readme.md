@@ -7,7 +7,7 @@
 
 `grunt-shell-cmd` is a shell command which is executed from a commmand line
 environment (e.g, Bash, PowerShell, etc.) and consists of a number of common
-administritive commands.  This allows you to use the same command across
+administritive commands.  This allows you to use the same set of commands across
 multiple platforms without having to know the underlying platform-specific
 details.  The only requirement in order to execute `grunt-shell-cmd` is you
 *must* have Node.js already installed.
@@ -41,15 +41,22 @@ Additionally, you *must* separate each additional command using the `_` symbol.
 An example of where you would string together multiple commands is:
 
 ```
-node-shell-cmd disks.all.list \_ arr.first
+node-shell-cmd disks.all.list _ arr.first
 ```
 
 You can string together as many commands using the `_` symbol as you would like
-and you can also still use the `\\` symbol to separate the commands on the
+and you can also still use the `\` symbol to separate the commands on the
 command line, so the previous example could also be written as:
 
 ```
 node-shell-cmd \
-    disks.all.list \_ \
+    disks.all.list _ \
     arr.first
 ```
+
+## Getting Command Help
+
+Every command can be supplied with the `help` argument which will then display
+information on what the command is and how it can be used.  For example, to
+learn more about the `disks.all.list` command, you would do:
+`node-shell-cmd disks.all.list help`.
