@@ -3,6 +3,11 @@
 > Cross-platform collection of command line utilities which can
 > greatly simplify common administrative tasks.
 
+## Quickstart
+
+1. [Install Node.js](http://nodejs.org/download/)
+2. in-progress...
+
 ## Overview
 
 `grunt-shell-cmd` is a shell command which is executed from a commmand line
@@ -67,11 +72,11 @@ learn more about the `disks.all.list` command, you would do:
 
 All commands follow this basic format:
 
-```
+```javascript
 // dot separated unique name
 // commands are organized based on a tree structure
 // with the root of the tree starting on the left
-'cmd.name': {
+cmds['cmd.name']: {
     desc: 'Description of the command',
     // if the command requires input from either command line or a previous
     // command in order to operate correctly, then set this to true, otherwise
@@ -81,7 +86,7 @@ All commands follow this basic format:
     // basically the type of OS grunt-shell-cmd is running inside of
     cmd: {
         // the "all" platform means you can execute the command regardless of
-        // the platform and any additional platformst specified are ignored
+        // the platform and any additional platforms specified are ignored
         all: function(args, pipe, input, callback) {
             // if you need to execute an actual shell command, then you must
             // use the execCommand function

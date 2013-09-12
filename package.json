@@ -1,0 +1,37 @@
+{
+  "name": "grunt-shell-cmd",
+  "description": "Cross-platform collection of command line utilities which can greatly simplify common administrative tasks.",
+  "version": "0.1.0",
+  "homepage": "https://github.com/nutype/node-shell-cmd",
+  "author": {
+    "name": "Zachariah Wadler",
+    "url": "https://github.com/nutype/node-shell-cmd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nutype/node-shell-cmd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nutype/node-shell-cmd/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://opensource.org/licenses/MIT"
+    }
+  ],
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-concat": "~0.2.0",
+    "grunt-contrib-jshint": "~0.6.4",
+    "grunt-chmod": "~1.0.3"
+  },
+  "keywords": [
+    "shell",
+    "command"
+  ]
+}
