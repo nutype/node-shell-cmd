@@ -12,7 +12,7 @@
                     });
             },
             windows: function(args, pipe, input, callback) {
-                execCommand('wmic logicaldisk get deviceid',
+                execCommand('wmic diskdrive get deviceid',
                     function(stdout) {
                         nextCommand(pipe,
                             stdoutToArray(stdout, [/^DeviceID/]), callback);

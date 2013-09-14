@@ -15,7 +15,7 @@ module.exports = function(grunt) {
                     'src/arr/last.js',
                     'src/arr/length.js',
                     // disk
-                    //'src/disk/info.js',
+                    'src/disk/info.js',
                     // disks
                     // disks.all
                     'src/disks/all/devNames.js',

@@ -17,7 +17,8 @@
             trailingSpaces: /\s+\n/g,
             blankLine: /^\s*$/,
             leadingSpacesByPipe: /\s+_/,
-            trailingSpacesByPipe: /_\s+/
+            trailingSpacesByPipe: /_\s+/,
+            backslash: /\\/g
         },
         cmds = {};
         
