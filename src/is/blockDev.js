@@ -2,13 +2,13 @@
         desc: 'Determines if the provided input is a valid block device.',
         requiresInput: true,
         cmd: {
-            all: function (args, pipe, input, callback) {
+            all: function (args, input, callback) {
                 fs.stat(input, function(err, stats) {
                     if (err !== null) {
-                        bugOut('Error performing a stat on "' + input + '"\n' +
-                            'err: ' + err);
+                        callback('Error performing a stat on "' + input + '"\n' +
+                            'err: ' + err, true);
                     } else {
-                        nextCommand(pipe, stats.isBlockDevice(), callback);
+                        callback(stats.isBlockDevice());
                     }
                 });
             }

@@ -4,11 +4,12 @@
             'single-quoted and use JSON syntax',
         requiresInput: true,
         cmd: {
-            all: function(args, pipe, input, callback) {
+            all: function(args, input, callback) {
                 if (!Array.isArray(input)) {
-                    bugOut('Not a valid input array');
+                    callback('Not a valid input array', true);
+                } else {
+                    callback(input[0]);
                 }
-                nextCommand(pipe, input[0], callback);
             }
         }
     };
