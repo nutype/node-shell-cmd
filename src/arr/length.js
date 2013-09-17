@@ -2,14 +2,13 @@
         desc: 'Returns the length of an array. If you are ' +
             'supplying the array on the command line, then it must be ' +
             'single-quoted and use JSON syntax',
-        requiresInput: true,
+        input: {
+            type: 'array',
+            desc: 'The input array'
+        },
         cmd: {
             all: function(args, input, callback) {
-                if (!Array.isArray(input)) {
-                    callback('Not a valid input array', true);
-                } else {
-                    callback(input.length);
-                }
+                callback(input.length);
             }
         }
     };

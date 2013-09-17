@@ -1,6 +1,9 @@
     cmds['is.charDev'] = {
         desc: 'Determines if the provided input is a valid character device.',
-        requiresInput: true,
+        input: {
+            type: 'string',
+            desc: 'The /dev path in Linux'
+        },
         cmd: {
             all: function (args, input, callback) {
                 fs.stat(input, function(err, stats) {

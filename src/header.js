@@ -15,7 +15,8 @@ var fs = require('fs'),
         windowsLinebreak: /\r/g,
         trailingSpaces: /\s+\n/g,
         blankLine: /^\s*$/,
-        backslash: /\\/g
+        backslash: /\\/g,
+        lsblkDiskInfo: /^\s+SIZE\s+STATE\s+PHY-SEC/
     },
     cmds = {};
     

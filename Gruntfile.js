@@ -11,7 +11,6 @@ module.exports = function(grunt) {
         'src/disk/info.js',
         // disks
         // disks.all
-        'src/disks/all/devNames.js',
         'src/disks/all/list.js',
         // disks.local
         'src/disks/local/list.js',
@@ -23,7 +22,9 @@ module.exports = function(grunt) {
         'src/is/file.js',
         'src/is/root.js',
         'src/is/socket.js',
-        'src/is/symlink.js'
+        'src/is/symlink.js',
+        // obj
+        'src/obj/prop.js'
     ];
     
     // project configuration

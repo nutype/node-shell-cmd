@@ -1,6 +1,9 @@
     cmds['is.file'] = {
         desc: 'Determines if the provided input is a valid regular file.',
-        requiresInput: true,
+        input: {
+            type: 'string',
+            desc: 'The absolute or relative path to a regular file'
+        },
         cmd: {
             all: function (args, input, callback) {
                 fs.stat(input, function(err, stats) {

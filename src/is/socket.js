@@ -1,6 +1,9 @@
     cmds['is.socket'] = {
         desc: 'Determines if the provided input is a valid socket.',
-        requiresInput: true,
+        input: {
+            type: 'string',
+            desc: 'The socket path'
+        },
         cmd: {
             all: function (args, input, callback) {
                 fs.stat(input, function(err, stats) {

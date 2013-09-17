@@ -1,6 +1,9 @@
     cmds['is.fifo'] = {
         desc: 'Determines if the provided input is a valid FIFO.',
-        requiresInput: true,
+        input: {
+            type: 'string',
+            desc: 'The /dev path in Linux'
+        },
         cmd: {
             all: function (args, input, callback) {
                 fs.stat(input, function(err, stats) {

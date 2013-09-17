@@ -9,11 +9,11 @@ function validCommand(cmd) {
         cmds.hasOwnProperty(cmd);
 }
 
-function execCommand(cmd, callback) {
+function execCommand(cmd, callback, callbackError) {
     exec(cmd, function(err, stdout, stderr) {
         if (err !== null ||
             stderr.length > 0) {
-            callback({
+            callbackError({
                 err: err,
                 code: err.code,
                 signal: err.signal,
