@@ -7,13 +7,11 @@
 
 If you want to simply use the command line utility:
 
-1. [Install Node.js](http://nodejs.org/download/)
-    a. If you're using Linux, you should be able to install Node.js using a package manager like `yum` or `aptitude`, but just make sure it's at least version 0.8.0
+1. [Install Node.js](http://nodejs.org/download/).  If you're using Linux, you should be able to install Node.js using a package manager like `yum` or `aptitude`, but just make sure it's at least version 0.8.0
 2. Download a copy of the binary [here](https://github.com/nutype/node-shell-cmd/tree/master/bin/node-shell-cmd)
-3. Place the binary in your `PATH`, such as `/usr/sbin`
-    a. If you're using Windows, then you have two options:
-        1. Install [Cygwin](http://www.cygwin.com/install.html) and copy the binary into the appropriate Cygwin `/usr/sbin` directory
-        2. Make sure the `node` command is in your `PATH` environment variable (this should be handled for you automatically by the Node.js installer), navigate to the directory which contains the `node-shell-cmd` binary and do: `node node-shell-cmd`
+3. Place the binary in your `PATH`, such as `/usr/sbin`.  If you're using Windows, then you have two options:
+    * Install [Cygwin](http://www.cygwin.com/install.html) and copy the binary into the appropriate Cygwin `/usr/sbin` directory
+    * Make sure the `node` command is in your `PATH` environment variable (this should be handled for you automatically by the Node.js installer), navigate to the directory which contains the `node-shell-cmd` binary and do: `node node-shell-cmd`
         
 If you want to use the Node.js module:
 
