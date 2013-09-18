@@ -16,7 +16,10 @@ var fs = require('fs'),
         trailingSpaces: /\s+\n/g,
         blankLine: /^\s*$/,
         backslash: /\\/g,
-        lsblkDiskInfo: /^\s+SIZE\s+STATE\s+PHY-SEC/
+        lsblkDiskInfo: /^\s+SIZE\s+STATE\s+PHY-SEC/,
+        windowsPhysDrive: /^\\\\\.\\PHYSICALDRIVE\d+$/,
+        windowsPhysDriveNum: /(\d+)$/,
+        doubleQuote: /"/g
     },
     cmds = {};
     
