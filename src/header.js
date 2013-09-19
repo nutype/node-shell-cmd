@@ -10,6 +10,29 @@ var fs = require('fs'),
             case 'Linux': return 'linux';
         }
     })(),
+    // platformProduct describes the generic product release of the OS
+    // which for linux could be:
+    // * redhat
+    // * debian
+    // ...and for windows could be:
+    // * 8
+    // * 7
+    // * vista
+    // * server
+    platformProduct = '',
+    // platformDist describes the major release of the product
+    // which for linux could be:
+    // * rhel6
+    // * rhel5
+    // ...and for windows
+    // * professional
+    // * enterprise
+    // * home
+    // * 2012
+    // * 2008
+    // * 2003
+    platformDist = '',
+    platform64bit = false,
     regex = {
         cmdName: /^[a-z.]+$/,
         windowsLinebreak: /\r/g,
@@ -18,7 +41,6 @@ var fs = require('fs'),
         backslash: /\\/g,
         lsblkDiskInfo: /^\s+SIZE\s+STATE\s+PHY-SEC/,
         windowsPhysDrive: /^\\\\\.\\PHYSICALDRIVE\d+$/,
-        windowsPhysDriveNum: /(\d+)$/,
         doubleQuote: /"/g
     },
     cmds = {};

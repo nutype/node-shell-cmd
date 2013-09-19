@@ -11,6 +11,29 @@ var fs = require('fs'),
             case 'Linux': return 'linux';
         }
     })(),
+    // platformProduct describes the generic product release of the OS
+    // which for linux could be:
+    // * redhat
+    // * debian
+    // ...and for windows could be:
+    // * 8
+    // * 7
+    // * vista
+    // * server
+    platformProduct = '',
+    // platformDist describes the major release of the product
+    // which for linux could be:
+    // * rhel6
+    // * rhel5
+    // ...and for windows
+    // * professional
+    // * enterprise
+    // * home
+    // * 2012
+    // * 2008
+    // * 2003
+    platformDist = '',
+    platform64bit = false,
     regex = {
         cmdName: /^[a-z.]+$/,
         windowsLinebreak: /\r/g,
@@ -19,7 +42,6 @@ var fs = require('fs'),
         backslash: /\\/g,
         lsblkDiskInfo: /^\s+SIZE\s+STATE\s+PHY-SEC/,
         windowsPhysDrive: /^\\\\\.\\PHYSICALDRIVE\d+$/,
-        windowsPhysDriveNum: /(\d+)$/,
         doubleQuote: /"/g
     },
     cmds = {};
@@ -33,6 +55,144 @@ function bugOut(msg) {
 function validCommand(cmd) {
     return typeof cmd === 'string' &&
         cmds.hasOwnProperty(cmd);
+}
+
+function validWindowsDisk(disk) {
+    return !regex.windowsPhysDrive.test(input);
+}
+
+function validInput(cmd, input, callback) {
+    switch (cmds[cmd].input.type) {
+        case 'string': callback(typeof input === 'string'); break;
+        case 'array': callback(Array.isArray(input)); break;
+        case 'object': callback(typeof input === 'object'); break;
+        case 'number': callback(typeof input === 'number'); break;
+        case 'boolean': callback(typeof input === 'boolean'); break;
+        case 'blockDev':
+            cmds['is.blockDev'].cmd[platform](null, input, function(result, err) {
+                if (!err) {
+                    callback(result);
+                } else {
+                    callback(false);
+                }
+            });
+            break;
+        case 'disk':
+            cmds['is.disk'].cmd[platform](null, input, function(result, err) {
+                if (!err) {
+                    callback(result);
+                } else {
+                    callback(false);
+                }
+            });
+            break;
+        case 'opticalDrive':
+            cmds['is.opticalDrive'].cmd[platform](null, input, function(result, err) {
+                if (!err) {
+                    callback(result);
+                } else {
+                    callback(false);
+                }
+            });
+            break;
+        case 'file':
+            cmds['is.file'].cmd[platform](null, input, function(result, err) {
+                if (!err) {
+                    callback(result);
+                } else {
+                    callback(false);
+                }
+            });
+            break;
+        case 'dir':
+            cmds['is.dir'].cmd[platform](null, input, function(result, err) {
+                if (!err) {
+                    callback(result);
+                } else {
+                    callback(false);
+                }
+            });
+            break;
+        default: callback(false);
+    }
+}
+
+function validArgument(cmd, argName, input, callback) {
+    var argObj;
+    if (typeof argName === 'string') {
+        argObj = cmds[cmd].args[argName];
+    } else {
+        argObj = cmds[cmd].arg;
+    }
+    
+    switch (argObj.type) {
+        case 'string':
+            setTimeout(function() {
+                callback(typeof input === 'string');
+            }, 0);
+            break;
+        case 'array': 
+            setTimeout(function() {
+                callback(Array.isArray(input));
+            }, 0);
+            break;
+        case 'number':
+            setTimeout(function() {
+                callback(typeof input === 'number');
+            }, 0);
+            break;
+        case 'boolean':
+            setTimeout(function() {
+                callback(typeof input === 'boolean');
+            }, 0);
+            break;
+        case 'blockDev':
+            cmds['is.blockDev'].cmd[platform](null, input, function(result, err) {
+                if (!err) {
+                    callback(result);
+                } else {
+                    callback(false);
+                }
+            });
+            break;
+        case 'disk':
+            cmds['is.disk'].cmd[platform](null, input, function(result, err) {
+                if (!err) {
+                    callback(result);
+                } else {
+                    callback(false);
+                }
+            });
+            break;
+        case 'opticalDrive':
+            cmds['is.opticalDrive'].cmd[platform](null, input, function(result, err) {
+                if (!err) {
+                    callback(result);
+                } else {
+                    callback(false);
+                }
+            });
+            break;
+        case 'file':
+            cmds['is.file'].cmd[platform](null, input, function(result, err) {
+                if (!err) {
+                    callback(result);
+                } else {
+                    callback(false);
+                }
+            });
+            break;
+        case 'dir':
+            cmds['is.dir'].cmd[platform](null, input, function(result, err) {
+                if (!err) {
+                    callback(result);
+                } else {
+                    callback(false);
+                }
+            });
+            break;
+        default: callback(false);
+    }
 }
 
 function execCommand(cmd, callback, callbackError) {
@@ -96,9 +256,11 @@ function showHelp(cmd) {
     process.exit(0);
 }
 
-function buildPipe(args) {
+function buildPipe(args, callback) {
     var pipe = [],
-        cmdIdx;
+        cmdIdx,
+        validCalls = 0,
+        validCallbacks = 0;
         
     if (args.length === 1) {
         pipe.push([args[0]]);
@@ -125,7 +287,7 @@ function buildPipe(args) {
         }
     });
     
-    return pipe.map(function(cmd, idx) {
+    var newpipe = pipe.map(function(cmd, idx) {
         var cmdName = cmd[0],
             cmdFn,
             args,
@@ -149,14 +311,14 @@ function buildPipe(args) {
         if (cmd[1] === 'help') {
             showHelp(cmdName);
         } else if (idx === 0) { // first command
-            if (cmd.length === 1) {
+            if (cmd.length === 1) { // cmd.name
                 if (!!cmdInput) {
                     bugOut('The command "' + cmdName + '" requires a "' +
                         cmds[cmdName].input.type + '" input');
                 }
                 
                 return [cmdFn, undefined, undefined];
-            } else if (cmd.length === 2) {
+            } else if (cmd.length === 2) { // cmd.name args|input
                 if (!!cmdArg &&
                     !!cmdArg.required) {
                     bugOut('The command "' + cmdName + '" requires a single "' +
@@ -179,13 +341,10 @@ function buildPipe(args) {
                 
                 if (typeof cmdInput === 'undefined') {
                     return [cmdFn, undefined, undefined];
-                } else if (typeof input !== cmdInput.type) {
-                    bugOut('The provided input is not of the correct input ' +
-                        'type "' + cmdInput.type + '"');
+                } else {
+                    return [cmdFn, undefined, input];
                 }
-                
-                return [cmdFn, undefined, input];
-            } else {   
+            } else { // cmd.name args input
                 try {
                     args = JSON.parse(cmd[1]);
                 } catch (e) {
@@ -193,36 +352,27 @@ function buildPipe(args) {
                         cmdName + '"');
                 }
                 
-                if (!!cmdArg) {
-                    if (typeof args !== cmdArg.type) {
-                        bugOut('The provided single argument is not of the correct ' +
-                            'type "' + cmdArg.type + '"');
-                    }
-                } else if (!!cmdArgs) {
+                if (!!cmdArgs) {
                     if (typeof args !== 'object') {
                         bugOut('The command "' + cmdName + '" requires an ' +
                             'arguments object');
-                    } else {
-                        Object.keys(cmdArgs).forEach(function(arg) {
-                            if (!!cmdArgs.require &&
-                                !args.hasOwnProperty(arg)) {
-                                bugOut('The command "' + cmdName + '" requires the "' +
-                                    arg + '" argument specified in a JSON object');
-                            }
-                        });
-                        
-                        Object.keys(args).forEach(function(arg) {
-                            if (!cmdArgs.hasOwnProperty(arg)) {
-                                bugOut('The command "' + cmdName + '" does not ' +
-                                    'an accept an argument of "' + arg + '"');
-                            } else if (typeof args[arg] !== cmdArgs[arg].type) {
-                                bugOut('The command "' + cmdName + '" was provided ' +
-                                    'with an invalid value for the "' + arg +
-                                    '" argument');
-                            }
-                        });
                     }
-                } else {
+                    
+                    Object.keys(cmdArgs).forEach(function(arg) {
+                        if (!!cmdArgs.require &&
+                            !args.hasOwnProperty(arg)) {
+                            bugOut('The command "' + cmdName + '" requires the "' +
+                                arg + '" argument specified in a JSON object');
+                        }
+                    });
+                    
+                    Object.keys(args).forEach(function(arg) {
+                        if (!cmdArgs.hasOwnProperty(arg)) {
+                            bugOut('The command "' + cmdName + '" does not ' +
+                                'an accept an argument of "' + arg + '"');
+                        }
+                    });
+                } else if (!!!cmdArg) {
                     args = undefined;
                 }
                 
@@ -235,12 +385,9 @@ function buildPipe(args) {
                 
                 if (typeof cmdInput === 'undefined') {
                     return [cmdFn, args, undefined];
-                } else if (typeof input !== cmdInput.type) {
-                    bugOut('The provided input is not of the correct input ' +
-                        'type "' + cmdInput.type + '"');
+                } else {
+                    return [cmdFn, args, input];
                 }
-                
-                return [cmdFn, args, input];
             }
         } else { // additional command
             if (cmd.length === 1) {
@@ -266,36 +413,26 @@ function buildPipe(args) {
                         cmdName + '"');
                 }
                 
-                if (!!cmdArg) {
-                    if (typeof args !== cmdArg.type) {
-                        bugOut('The provided single argument is not of the correct ' +
-                            'type "' + cmdArg.type + '"');
-                    }
-                } else if (!!cmdArgs) {
+                if (!!cmdArgs) {
                     if (typeof args !== 'object') {
                         bugOut('The command "' + cmdName + '" requires an ' +
                             'arguments object');
-                    } else {
-                        Object.keys(cmdArgs).forEach(function(arg) {
-                            if (!!cmdArgs.require &&
-                                !args.hasOwnProperty(arg)) {
-                                bugOut('The command "' + cmdName + '" requires the "' +
-                                    arg + '" argument specified in a JSON object');
-                            }
-                        });
-                        
-                        Object.keys(args).forEach(function(arg) {
-                            if (!cmdArgs.hasOwnProperty(arg)) {
-                                bugOut('The command "' + cmdName + '" does not ' +
-                                    'an accept an argument of "' + arg + '"');
-                            } else if (typeof args[arg] !== cmdArgs[arg].type) {
-                                bugOut('The command "' + cmdName + '" was provided ' +
-                                    'with an invalid value for the "' + arg +
-                                    '" argument');
-                            }
-                        });
                     }
-                } else {
+                    Object.keys(cmdArgs).forEach(function(arg) {
+                        if (!!cmdArgs.require &&
+                            !args.hasOwnProperty(arg)) {
+                            bugOut('The command "' + cmdName + '" requires the "' +
+                                arg + '" argument specified in a JSON object');
+                        }
+                    });
+                    
+                    Object.keys(args).forEach(function(arg) {
+                        if (!cmdArgs.hasOwnProperty(arg)) {
+                            bugOut('The command "' + cmdName + '" does not ' +
+                                'an accept an argument of "' + arg + '"');
+                        }
+                    });
+                } else if (!!!cmdArg) {
                     args = undefined;
                 }
                 
@@ -303,6 +440,57 @@ function buildPipe(args) {
             }
         }
     });
+    
+    newpipe.forEach(function(cmd, idx) {
+        var cmdName = pipe[idx][0];
+        
+        if (idx === 0 && // first command
+            !!cmds[cmdName].input) { // requires input
+            validCalls++;
+            validInput(cmdName, cmd[2], function(isValid) {
+                validCallbacks++;
+                
+                if (!isValid) {
+                    bugOut('The command "' + cmdName + '" requires a ' +
+                        'valid "' + cmds[cmdName].input.type + '" input type');
+                } else if (validCalls === validCallbacks) {
+                    callback(newpipe);
+                }
+            });
+        }
+        
+        if (!!cmds[cmdName].arg && // accepts single argument
+            cmds[cmdName].arg.required) { // single argument required
+            validCalls++;
+            validArgument(cmdName, null, cmd[2], function(isValid) {
+                validCallbacks++;
+                if (!isValid) {
+                    bugOut('The provided single argument is not of ' +
+                        'the correct type "' + cmds[cmdName].arg.type + '"');
+                } else if (validCalls === validCallbacks) {
+                    callback(newpipe);
+                }
+            });
+        } else if (!!cmds[cmdName].args) { // accepts multiple arguments
+            Object.keys(cmd[1]).forEach(function(arg) {
+                validCalls++;
+                validArgument(cmdName, arg, cmd[1][arg], function(isValid) {
+                    validCallbacks++;
+                    if (!isValid) {
+                        bugOut('The command "' + cmdName + '" was ' +
+                            'provided with an invalid value for ' +
+                            'the "' + arg + '" argument');
+                    } else if (validCalls === validCallbacks) {
+                        callback(newpipe);
+                    }
+                });
+            });
+        }
+    });
+    
+    if (validCalls === 0) {
+        callback(newpipe);
+    }
 }
 
 cmds['arr.first'] = {
@@ -350,8 +538,8 @@ cmds['arr.length'] = {
 cmds['disk.info'] = {
     desc: 'Gets detailed information for a particular disk.',
     input: {
-        type: 'string',
-        desc: 'The /dev path in Linux and the \\\\.\\PHYSICALDRIVE name in Windows'
+        type: 'disk',
+        desc: 'The /dev path in Linux or the \\\\.\\PHYSICALDRIVE name in Windows'
     },
     cmd: {
         linux: function(args, input, callback) {
@@ -401,17 +589,15 @@ cmds['disk.info'] = {
             });
         },
         windows: function(args, input, callback) {
-            if (!regex.windowsPhysDrive.test(input)) {
-                bugOut('The command "disk.info" requires a valid ' +
-                    '\\\\.\\PHYSICALDRIVE name');
+            if (!validWindowsDisk(input)) {
+                callback('Invalid PHYSICALDRIVE specified', true);
             }
-            var driveNum = regex.windowsPhysDriveNum.exec(input)[1];
-            
+
             execCommand('wmic diskdrive where DeviceID="' +
                 input.replace(regex.backslash, '\\\\') + '" list/format:value',
                 function(stdout) {
                     var obj = {};
-                    
+
                     stdout.replace(regex.windowsLinebreak, '').split('\n')
                         .filter(function(kv) {
                             return kv.length > 0;
@@ -593,7 +779,7 @@ cmds['is.blockDev'] = {
         desc: 'The /dev path in Linux'
     },
     cmd: {
-        all: function (args, input, callback) {
+        linux: function (args, input, callback) {
             fs.stat(input, function(err, stats) {
                 if (err !== null) {
                     callback('Error performing a stat on "' + input + '"\n' +
@@ -638,6 +824,25 @@ cmds['is.dir'] = {
                         'err: ' + err, true);
                 } else {
                     callback(stats.isDirectory());
+                }
+            });
+        }
+    }
+};
+cmds['is.disk'] = {
+    desc: 'Determines if the provided input is a valid physical disk. ' +
+        'This excludes CD/DVD-ROM drives.',
+    input: {
+        type: 'string',
+        desc: 'The /dev path in Linux or the \\\\.\\PHYSICALDRIVE name in Windows'
+    },
+    cmd: {
+        linux: function (args, input, callback) {
+            cmds['is.blockDev'].cmd.linux(args, input, function(isBlockDev) {
+                if (isBlockDev) {
+                    //execCommand('
+                } else {
+                    callback(false);
                 }
             });
         }
@@ -745,14 +950,67 @@ cmds['obj.prop'] = {
         }
     }
 };
-
-var origPipe = buildPipe(process.argv.slice(2));
-
-if (origPipe.length === 0) {
-    bugOut('Invalid command string specified');
-} else {
-    nextCommand(origPipe, origPipe[0][2], function(obj) {
-        console.log(JSON.stringify(obj));
+function platformInfoReady() {
+    buildPipe(process.argv.slice(2), function(origPipe) {
+        console.log([platform,platformProduct,platformDist].join(' '));
+        if (origPipe.length === 0) {
+            bugOut('Invalid command string specified');
+        } else {
+            nextCommand(origPipe, origPipe[0][2], function(obj) {
+                console.log(JSON.stringify(obj));
+            });
+        }
     });
 }
+
+// determine the platformProduct and platformDist variables
+switch (platform) {
+    case 'windows':
+        execCommand('wmic path win32_operatingsystem get /format:value',
+            function(stdout) {
+                stdoutToArray(stdout).forEach(function(kv) {
+                    var pair = kv.split('=');
+                    switch (pair[0]) {
+                        case 'Caption':
+                            if (/\s8\s/.test(pair[1])) {
+                                platformProduct = '8';
+                            } else if (/\s7\s/.test(pair[1])) {
+                                platformProduct = '7';
+                            } else if (/\s[Vv]ista\s/.test(pair[1])) {
+                                platformProduct = 'vista';
+                            } else if (/\s[Ss]erver\s/.test(pair[1])) {
+                                platformProduct = 'server';
+                            }
+                            
+                            if (/\s[Pp]rofessional/.test(pair[1])) {
+                                platformDist = 'professional';
+                            } else if (/\s[Hh]ome/.test(pair[1])) {
+                                platformDist = 'home';
+                            } else if (/\s[Ee]nterprise/.test(pair[1])) {
+                                platformDist = 'enterprise';
+                            } else if (/\s2012/.test(pair[1])) {
+                                platformDist = '2012';
+                            } else if (/\s2008/.test(pair[1])) {
+                                platformDist = '2008';
+                            } else if (/\s2003/.test(pair[1])) {
+                                platformDist = '2003';
+                            }
+                            
+                            break;
+                        case 'OSArchitecture':
+                            if (/64/.test(pair[1])) {
+                                platform64bit = true;
+                            }
+                            break;
+                    }
+                });
+                
+                platformInfoReady();
+            },
+            function(err) {
+                bugOut('Cannot call wmic to determine Windows platform info.');
+            });
+        break;
+}
+
 })();

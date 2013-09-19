@@ -29,9 +29,11 @@ function showHelp(cmd) {
     process.exit(0);
 }
 
-function buildPipe(args) {
+function buildPipe(args, callback) {
     var pipe = [],
-        cmdIdx;
+        cmdIdx,
+        validCalls = 0,
+        validCallbacks = 0;
         
     if (args.length === 1) {
         pipe.push([args[0]]);
@@ -58,7 +60,7 @@ function buildPipe(args) {
         }
     });
     
-    return pipe.map(function(cmd, idx) {
+    var newpipe = pipe.map(function(cmd, idx) {
         var cmdName = cmd[0],
             cmdFn,
             args,
@@ -82,14 +84,14 @@ function buildPipe(args) {
         if (cmd[1] === 'help') {
             showHelp(cmdName);
         } else if (idx === 0) { // first command
-            if (cmd.length === 1) {
+            if (cmd.length === 1) { // cmd.name
                 if (!!cmdInput) {
                     bugOut('The command "' + cmdName + '" requires a "' +
                         cmds[cmdName].input.type + '" input');
                 }
                 
                 return [cmdFn, undefined, undefined];
-            } else if (cmd.length === 2) {
+            } else if (cmd.length === 2) { // cmd.name args|input
                 if (!!cmdArg &&
                     !!cmdArg.required) {
                     bugOut('The command "' + cmdName + '" requires a single "' +
@@ -112,13 +114,10 @@ function buildPipe(args) {
                 
                 if (typeof cmdInput === 'undefined') {
                     return [cmdFn, undefined, undefined];
-                } else if (typeof input !== cmdInput.type) {
-                    bugOut('The provided input is not of the correct input ' +
-                        'type "' + cmdInput.type + '"');
+                } else {
+                    return [cmdFn, undefined, input];
                 }
-                
-                return [cmdFn, undefined, input];
-            } else {   
+            } else { // cmd.name args input
                 try {
                     args = JSON.parse(cmd[1]);
                 } catch (e) {
@@ -126,36 +125,27 @@ function buildPipe(args) {
                         cmdName + '"');
                 }
                 
-                if (!!cmdArg) {
-                    if (typeof args !== cmdArg.type) {
-                        bugOut('The provided single argument is not of the correct ' +
-                            'type "' + cmdArg.type + '"');
-                    }
-                } else if (!!cmdArgs) {
+                if (!!cmdArgs) {
                     if (typeof args !== 'object') {
                         bugOut('The command "' + cmdName + '" requires an ' +
                             'arguments object');
-                    } else {
-                        Object.keys(cmdArgs).forEach(function(arg) {
-                            if (!!cmdArgs.require &&
-                                !args.hasOwnProperty(arg)) {
-                                bugOut('The command "' + cmdName + '" requires the "' +
-                                    arg + '" argument specified in a JSON object');
-                            }
-                        });
-                        
-                        Object.keys(args).forEach(function(arg) {
-                            if (!cmdArgs.hasOwnProperty(arg)) {
-                                bugOut('The command "' + cmdName + '" does not ' +
-                                    'an accept an argument of "' + arg + '"');
-                            } else if (typeof args[arg] !== cmdArgs[arg].type) {
-                                bugOut('The command "' + cmdName + '" was provided ' +
-                                    'with an invalid value for the "' + arg +
-                                    '" argument');
-                            }
-                        });
                     }
-                } else {
+                    
+                    Object.keys(cmdArgs).forEach(function(arg) {
+                        if (!!cmdArgs.require &&
+                            !args.hasOwnProperty(arg)) {
+                            bugOut('The command "' + cmdName + '" requires the "' +
+                                arg + '" argument specified in a JSON object');
+                        }
+                    });
+                    
+                    Object.keys(args).forEach(function(arg) {
+                        if (!cmdArgs.hasOwnProperty(arg)) {
+                            bugOut('The command "' + cmdName + '" does not ' +
+                                'an accept an argument of "' + arg + '"');
+                        }
+                    });
+                } else if (!!!cmdArg) {
                     args = undefined;
                 }
                 
@@ -168,12 +158,9 @@ function buildPipe(args) {
                 
                 if (typeof cmdInput === 'undefined') {
                     return [cmdFn, args, undefined];
-                } else if (typeof input !== cmdInput.type) {
-                    bugOut('The provided input is not of the correct input ' +
-                        'type "' + cmdInput.type + '"');
+                } else {
+                    return [cmdFn, args, input];
                 }
-                
-                return [cmdFn, args, input];
             }
         } else { // additional command
             if (cmd.length === 1) {
@@ -199,36 +186,26 @@ function buildPipe(args) {
                         cmdName + '"');
                 }
                 
-                if (!!cmdArg) {
-                    if (typeof args !== cmdArg.type) {
-                        bugOut('The provided single argument is not of the correct ' +
-                            'type "' + cmdArg.type + '"');
-                    }
-                } else if (!!cmdArgs) {
+                if (!!cmdArgs) {
                     if (typeof args !== 'object') {
                         bugOut('The command "' + cmdName + '" requires an ' +
                             'arguments object');
-                    } else {
-                        Object.keys(cmdArgs).forEach(function(arg) {
-                            if (!!cmdArgs.require &&
-                                !args.hasOwnProperty(arg)) {
-                                bugOut('The command "' + cmdName + '" requires the "' +
-                                    arg + '" argument specified in a JSON object');
-                            }
-                        });
-                        
-                        Object.keys(args).forEach(function(arg) {
-                            if (!cmdArgs.hasOwnProperty(arg)) {
-                                bugOut('The command "' + cmdName + '" does not ' +
-                                    'an accept an argument of "' + arg + '"');
-                            } else if (typeof args[arg] !== cmdArgs[arg].type) {
-                                bugOut('The command "' + cmdName + '" was provided ' +
-                                    'with an invalid value for the "' + arg +
-                                    '" argument');
-                            }
-                        });
                     }
-                } else {
+                    Object.keys(cmdArgs).forEach(function(arg) {
+                        if (!!cmdArgs.require &&
+                            !args.hasOwnProperty(arg)) {
+                            bugOut('The command "' + cmdName + '" requires the "' +
+                                arg + '" argument specified in a JSON object');
+                        }
+                    });
+                    
+                    Object.keys(args).forEach(function(arg) {
+                        if (!cmdArgs.hasOwnProperty(arg)) {
+                            bugOut('The command "' + cmdName + '" does not ' +
+                                'an accept an argument of "' + arg + '"');
+                        }
+                    });
+                } else if (!!!cmdArg) {
                     args = undefined;
                 }
                 
@@ -236,4 +213,55 @@ function buildPipe(args) {
             }
         }
     });
+    
+    newpipe.forEach(function(cmd, idx) {
+        var cmdName = pipe[idx][0];
+        
+        if (idx === 0 && // first command
+            !!cmds[cmdName].input) { // requires input
+            validCalls++;
+            validInput(cmdName, cmd[2], function(isValid) {
+                validCallbacks++;
+                
+                if (!isValid) {
+                    bugOut('The command "' + cmdName + '" requires a ' +
+                        'valid "' + cmds[cmdName].input.type + '" input type');
+                } else if (validCalls === validCallbacks) {
+                    callback(newpipe);
+                }
+            });
+        }
+        
+        if (!!cmds[cmdName].arg && // accepts single argument
+            cmds[cmdName].arg.required) { // single argument required
+            validCalls++;
+            validArgument(cmdName, null, cmd[2], function(isValid) {
+                validCallbacks++;
+                if (!isValid) {
+                    bugOut('The provided single argument is not of ' +
+                        'the correct type "' + cmds[cmdName].arg.type + '"');
+                } else if (validCalls === validCallbacks) {
+                    callback(newpipe);
+                }
+            });
+        } else if (!!cmds[cmdName].args) { // accepts multiple arguments
+            Object.keys(cmd[1]).forEach(function(arg) {
+                validCalls++;
+                validArgument(cmdName, arg, cmd[1][arg], function(isValid) {
+                    validCallbacks++;
+                    if (!isValid) {
+                        bugOut('The command "' + cmdName + '" was ' +
+                            'provided with an invalid value for ' +
+                            'the "' + arg + '" argument');
+                    } else if (validCalls === validCallbacks) {
+                        callback(newpipe);
+                    }
+                });
+            });
+        }
+    });
+    
+    if (validCalls === 0) {
+        callback(newpipe);
+    }
 }

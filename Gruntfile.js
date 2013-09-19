@@ -18,6 +18,7 @@ module.exports = function(grunt) {
         'src/is/blockDev.js',
         'src/is/charDev.js',
         'src/is/dir.js',
+        'src/is/disk.js',
         'src/is/fifo.js',
         'src/is/file.js',
         'src/is/root.js',
@@ -39,6 +40,7 @@ module.exports = function(grunt) {
                     'src/shell-fns.js'
                 ].concat(cmds).concat([
                     'src/shell-footer.js',
+                    'src/platform-info.js',
                     'src/footer.js'
                 ]),
                 dest: 'bin/node-shell-cmd'
@@ -49,6 +51,7 @@ module.exports = function(grunt) {
                     'src/generic-fns.js',
                     'src/lib-fns.js'
                 ].concat(cmds).concat([
+                    'src/platform-info.js',
                     'src/footer.js'
                 ]),
                 dest: 'lib/node-shell-cmd.js'

@@ -3,6 +3,10 @@
 > Cross-platform collection of command line utilities which can
 > greatly simplify common administrative tasks.
 
+## Status
+
+Currently *unstable* and undergoing heavy initial development. Do *not* use this in an actual production environment at this point in time, but feel free to download and test.  The underlying command design structure is also undergoing constant refinement.
+
 ## Quickstart
 
 If you want to simply use the command line utility:
@@ -12,6 +16,8 @@ If you want to simply use the command line utility:
 3. Place the binary in your `PATH`, such as `/usr/sbin`.  If you're using Windows, then you have two options:
     * Install [Cygwin](http://www.cygwin.com/install.html) and copy the binary into the appropriate Cygwin `/usr/sbin` directory
     * Make sure the `node` command is in your `PATH` environment variable (this should be handled for you automatically by the Node.js installer), navigate to the directory which contains the `node-shell-cmd` binary and do: `node node-shell-cmd`
+4. If you're using Linux, you need to have the following binaries in your `PATH`:
+    * ...todo...
         
 If you want to use the Node.js module:
 
@@ -20,6 +26,12 @@ If you want to use the Node.js module:
 ## Overview
 
 `grunt-shell-cmd` is both a shell command which is executed from a commmand line environment (e.g, Bash, PowerShell, etc.) and a Node.js module library which you can directly interact with in your Node.js code in an asynchronous manner.  It consists of a number of common, cross-platform administritive commands which allows you to use the same set of commands across multiple platforms without having to know the underlying platform-specific details.
+
+The primary design goals of the commands exposed by `grunt-shell-cmd` are:
+
+* Simplicity
+* Aggregation of useful data
+* Straightforward piping of processed data
 
 The only requirement in order to execute the `grunt-shell-cmd` command line utility is you *must* have Node.js already installed and in your _PATH_.  Also, you can string together a series of `grunt-shell-cmd` commands from the command line similar to how you would pipe multiple commands using the `|` symbol (you actually use `_` instead).  The final result of the commands is then displayed on the command line as a JSON-encoded string.
 
@@ -96,7 +108,16 @@ cmds['cmd.name'] = {
     // you are *requiring* an input
     input: {
         // the "type" property is *required* and can either be:
-        // 'string','array','boolean','object','number'
+        // * 'string'
+        // * 'array'
+        // * 'boolean'
+        // * 'object'
+        // * 'number'
+        // * 'blockDev' (device which uses block-based storage)
+        // * 'disk' (this does not include CD/DVD-ROM drives)
+        // * 'opticalDrive' (CD/DVD-ROM drives)
+        // * 'file' (regular file with optional absolute or relative path)
+        // * 'dir' (absolute or relative path)
         type: 'array',
         // the "desc" property is *required* and describes the input data
         // at a high level
@@ -107,7 +128,15 @@ cmds['cmd.name'] = {
     // ignored
     arg: {
         // the "type" property is *required* and can either be:
-        // 'string','array','boolean','number'
+        // * 'string'
+        // * 'array'
+        // * 'boolean'
+        // * 'number'
+        // * 'blockDev' (device which uses block-based storage)
+        // * 'disk' (this does not include CD/DVD-ROM drives)
+        // * 'opticalDrive' (CD/DVD-ROM drives)
+        // * 'file' (regular file with optional absolute or relative path)
+        // * 'dir' (absolute or relative path)
         type: 'string',
         // the "desc" property is *required* and describes the single argument
         // at a high level
@@ -122,7 +151,15 @@ cmds['cmd.name'] = {
     args: {
         arg1: {
             // the "type" property is *required* and can either be:
-            // 'string','array','boolean','number'
+            // * 'string'
+            // * 'array'
+            // * 'boolean'
+            // * 'number'
+            // * 'blockDev' (device which uses block-based storage)
+            // * 'disk' (this does not include CD/DVD-ROM drives)
+            // * 'opticalDrive' (CD/DVD-ROM drives)
+            // * 'file' (regular file with optional absolute or relative path)
+            // * 'dir' (absolute or relative path)
             type: 'string',
             // the "desc" property is *required* and describes the argument
             // at a high level
@@ -165,9 +202,32 @@ cmds['cmd.name'] = {
         // on the value of "hadError"; if it's null or false, then the commands
         // were able to execute safely and "output" contains its processed output,
         // whereas if it's true, then "output" contains the "err" object
+        //
+        // finally, in order to streamline the development of commands, a lot
+        // the input type checking is done for you automatically, so you can
+        // instead focus on figuring out how to design the per-platform
+        // shell commands
         all: function(args, input, callback) {
             // if you need to execute an actual shell command, then you must
             // use the execCommand function
+            //
+            // if you do use this function, then try to avoid nesting any
+            // further execCommand function calls by moving any nested
+            // execCommand function calls into a new cmds['new.cmd'] command
+            //
+            // also, when working with windows, even if you are using grunt-shell-cmd
+            // from within Cygwin, the shell commands will execute within the context
+            // of a regular windows command prompt and not Cygwin
+            //
+            // regardless of the platform, *careful* consideration must be given
+            // to how you can *safely* execute the shell commands with a provided
+            // input and set of arguments.  Most of this headache is solved for
+            // you automatically by virtue of requiring JSON-formatted strings
+            // and doing a basic set of input and argument type checks.
+            //
+            // however, even with these checks, you still need to ensure the
+            // inputs to the shell commands are carefully filtered and sanitized,
+            // otherwise you run the risk of shell command injection
             execCommand('shell | command',
                 function(stdout) {
                     // process the results of stdout here
@@ -213,7 +273,55 @@ cmds['cmd.name'] = {
         },
         // the "windows" platform encompasses all Windows-based OSs
         windows: function(args, input, callback) {
-        }
+        },
+        // if you need to target a more specific linux or windows release/distribution
+        // then you can also use the values automatically derived for "product"
+        // and "dist". The general formats for these more targeted platforms are:
+        // <platform>_<product> and <platform>_<product>_<dist>
+        //
+        // node-shell-cmd will always prefer a more specific platform over
+        // a less specific one, but will fall back to a less specific platform
+        // if the more specific platform didn't match
+        //
+        // this functionality allows to you target specific platforms but
+        // automatically fall back to less specific platforms if needed.  As such,
+        // when developing new commands, you should first start out with the
+        // generic "linux" and "windows" platforms, but get more specific if needed
+        //
+        // for example, you could target "windows" first, but later find out the 
+        // underlying shell commands are not supported on Windows Server 2003, so you
+        // could then target "windows_server_2003" in order to support it
+        //
+        // this type of platform targeting can also be very useful when dealing
+        // with all of the various Linux distributions and major releases.  For
+        // example, you could start out by simply targeting "linux", but then find
+        // out there are some major differences in how to execute the commands
+        // between Debian-based and Red Hat -based distributions, so you could then
+        // break it out between "linux_redhat" and "linux_debian"
+        //
+        // for linux, the product could be:
+        // * redhat
+        // * debian
+        // ...and the dist could be:
+        // * rhel6
+        // * rhel5
+        //
+        // for windows, the product could be:
+        // * 8
+        // * 7
+        // * vista
+        // * server
+        // ...and the dist could be:
+        // * professional
+        // * enterprise
+        // * home
+        // * 2012
+        // * 2008
+        // * 2003
+        linux_redhat: function(args, input, callback) {},
+        linux_redhat_rhel6: function(args, input, callback) {},
+        windows_7: function(args, input, callback) {},
+        windows_7_professional: function(args, input, callback) {}
     }
 };
 ```

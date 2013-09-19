@@ -1,8 +1,8 @@
 cmds['disk.info'] = {
     desc: 'Gets detailed information for a particular disk.',
     input: {
-        type: 'string',
-        desc: 'The /dev path in Linux and the \\\\.\\PHYSICALDRIVE name in Windows'
+        type: 'disk',
+        desc: 'The /dev path in Linux or the \\\\.\\PHYSICALDRIVE name in Windows'
     },
     cmd: {
         linux: function(args, input, callback) {
@@ -52,17 +52,15 @@ cmds['disk.info'] = {
             });
         },
         windows: function(args, input, callback) {
-            if (!regex.windowsPhysDrive.test(input)) {
-                bugOut('The command "disk.info" requires a valid ' +
-                    '\\\\.\\PHYSICALDRIVE name');
+            if (!validWindowsDisk(input)) {
+                callback('Invalid PHYSICALDRIVE specified', true);
             }
-            var driveNum = regex.windowsPhysDriveNum.exec(input)[1];
-            
+
             execCommand('wmic diskdrive where DeviceID="' +
                 input.replace(regex.backslash, '\\\\') + '" list/format:value',
                 function(stdout) {
                     var obj = {};
-                    
+
                     stdout.replace(regex.windowsLinebreak, '').split('\n')
                         .filter(function(kv) {
                             return kv.length > 0;

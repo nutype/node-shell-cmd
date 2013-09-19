@@ -5,7 +5,7 @@ cmds['is.blockDev'] = {
         desc: 'The /dev path in Linux'
     },
     cmd: {
-        all: function (args, input, callback) {
+        linux: function (args, input, callback) {
             fs.stat(input, function(err, stats) {
                 if (err !== null) {
                     callback('Error performing a stat on "' + input + '"\n' +
