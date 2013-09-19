@@ -89,6 +89,18 @@ node-shell-cmd \
 
 Every command can be supplied with the `help` argument which will then display information on what the command is and how it can be used.  For example, to learn more about the `disks.all.list` command, you would do: `node-shell-cmd disks.all.list help`.
 
+### Listing Available Commnads
+
+You can easily list all commands by doing: `node-shell-cmd list`
+
+If you want to narrow down the returned results to a specific set of commands, you can do: `node-shell-cmd list <qualifier>`. Here are some examples:
+
+```
+$ node-shell-cmd list is.
+$ node-shell-cmd list disks.all
+$ node-shell-cmd list arr.
+```
+
 ## Development
 
 ### Basic Structure of Commands
@@ -99,6 +111,17 @@ All commands follow this basic format:
 // dot separated unique name
 // commands are organized based on a tree structure
 // with the root of the tree starting on the left
+//
+// Requirements:
+// * Cannot already be used (must be unique)
+// * Lowercase
+// * Each token in the name is separated by a dot
+// * The actual command is the last token in the string
+// * The command is placed into a reasonable location in the command tree
+//
+// Recommendations:
+// * Only uses the English a-z letters
+// * Does not have any kind of version or release number (e.g. cmd.name2)
 cmds['cmd.name'] = {
     // the following "desc" property is *required* and describes the command
     // at a high level
@@ -149,6 +172,16 @@ cmds['cmd.name'] = {
     // the following "args" property is *optional*, but if specified, describes
     // multiple accepted arguments
     args: {
+        // each property inside the "args" object is a unique argument name,
+        // so try to stick to short, descriptive argument names and avoid using
+        // the "-" character or having spaces inside the argument name.  Camel
+        // casing is also *preferred* in order to provide some level of
+        // consistency to the user
+        //
+        // also, with an "args" object, there is no longer the concept of
+        // "positional arguments" or the need to do "--arg", so the user can
+        // simply specify these arguments in any order and you don't have to
+        // use "--arg" syntax like in the "Good ol' days"
         arg1: {
             // the "type" property is *required* and can either be:
             // * 'string'

@@ -6,56 +6,44 @@ cmds['disk.info'] = {
     },
     cmd: {
         linux: function(args, input, callback) {
-            cmds['is.blockDev'].cmd.all(null, input, function(isBlockDev) {
-                if (isBlockDev) {
-                    // num sectors: blockdev --getsize /dev/sda (requires root)
-                    execCommand('udevadm info -q property -n ' + input + ' && ' +
-                        'lsblk -l -b -d -o SIZE,STATE,PHY-SEC ' + input,
-                        function(stdout) {
-                            var obj = {};
-                            stdout.split('\n').forEach(function(kv, idx, arr) {
-                                var pair = kv.split('=');
-                                
-                                switch (pair[0]) {
-                                    case 'DEVNAME': obj.devName = pair[1]; break;
-                                    case 'ID_VENDOR': obj.manf = pair[1]; break;
-                                    case 'ID_MODEL': obj.model = pair[1]; break;
-                                    case 'ID_PATH': obj.devID = '/dev/disk/by-path/' + pair[1]; break;
-                                }
-                                
-                                if (regex.lsblkDiskInfo.test(kv)) {
-                                    var lsblk = arr[idx + 1].split(' ').filter(function(result) {
-                                        return result.length > 0;
-                                    });
-                                    
-                                    obj.rawSizeInBytes = parseInt(lsblk[0], 10);
-                                    
-                                    if (lsblk[1] === 'running') {
-                                        obj.status = 'online';
-                                    } else {
-                                        obj.status = 'offline';
-                                    }
-                                    
-                                    obj.sectorSizeInBytes = parseInt(lsblk[2], 10);
-                                }
+            execCommand('udevadm info -q property -n ' + input + ' && ' +
+                'lsblk -l -b -d -o SIZE,STATE,PHY-SEC ' + input,
+                function(stdout) {
+                    var obj = {};
+                    stdout.split('\n').forEach(function(kv, idx, arr) {
+                        var pair = kv.split('=');
+                        
+                        switch (pair[0]) {
+                            case 'DEVNAME': obj.devName = pair[1]; break;
+                            case 'ID_VENDOR': obj.manf = pair[1]; break;
+                            case 'ID_MODEL': obj.model = pair[1]; break;
+                            case 'ID_PATH': obj.devID = '/dev/disk/by-path/' + pair[1]; break;
+                        }
+                        
+                        if (regex.lsblkDiskInfo.test(kv)) {
+                            var lsblk = arr[idx + 1].split(' ').filter(function(result) {
+                                return result.length > 0;
                             });
                             
-                            callback(obj);
-                        },
-                        function (err) {
-                            callback('Cannot execute disk.info command', true);
-                        });
-                } else {
-                    callback('The device "' + input + '" is not ' +
-                        'a block device', true);
-                }
-            });
+                            obj.rawSizeInBytes = parseInt(lsblk[0], 10);
+                            
+                            if (lsblk[1] === 'running') {
+                                obj.status = 'online';
+                            } else {
+                                obj.status = 'offline';
+                            }
+                            
+                            obj.sectorSizeInBytes = parseInt(lsblk[2], 10);
+                        }
+                    });
+                    
+                    callback(obj);
+                },
+                function (err) {
+                    callback('Cannot execute disk.info command', true);
+                });
         },
         windows: function(args, input, callback) {
-            if (!validWindowsDisk(input)) {
-                callback('Invalid PHYSICALDRIVE specified', true);
-            }
-
             execCommand('wmic diskdrive where DeviceID="' +
                 input.replace(regex.backslash, '\\\\') + '" list/format:value',
                 function(stdout) {

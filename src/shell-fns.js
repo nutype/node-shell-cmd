@@ -22,9 +22,69 @@ function nextCommand(pipe, input, callback) {
 }
 
 function showHelp(cmd) {
-    console.log('Command:\n\t' + cmd + '\n\n' +
-        'Description:\n\t' + cmds[cmd].desc + '\n\n' +
-        'Requires Input:\n\t' + cmds[cmd].requiresInput);
+    var helpStr = 'Command:\n\t' + cmd + '\n\n' +
+        'Description:\n\t' + cmds[cmd].desc + '\n\n',
+        requiresInput = false,
+        requiresArg;
+        
+    if (!!cmds[cmd].input) {
+        requiresInput = true;
+        helpStr += 'Requires Input:\n\tYes\n\n' +
+            'Input Description:\n\t' + cmds[cmd].input.desc + '\n\n' +
+            'Input Type:\n\t' + cmds[cmd].input.type + '\n\n';
+    } else {
+        helpStr += 'Requires Input:\n\tNo\n\n';
+    }
+    
+    if (!!cmds[cmd].arg) {
+        requiresArg = cmds[cmd].arg.required;
+        
+        helpStr += 'Single Argument Required:\n\t' +
+            (requiresArg ? 'Yes' : 'No') + '\n\n' +
+            'Single Argument Description:\n\t' +
+            cmds[cmd].arg.desc + '\n\n' +
+            'Single Argument Type:\n\t' +
+            cmds[cmd].arg.type + '\n\n' +
+            'Syntax:\n\t' + cmd + ' ' +
+            (requiresArg ? '\'JSON-encoded ' + cmds[cmd].arg.type + ' argument\' ' : '') +
+            (requiresInput ? '\'JSON-encoded ' + cmds[cmd].input.type + ' input\'' : '') + '\n\n';
+    } else if (!!cmds[cmd].args) {
+        Object.keys(cmds[cmd].args).forEach(function(arg) {
+            helpStr += '"' + arg + '" Argument Required:\n\t' +
+                (cmds[cmd].args[arg].required ? 'Yes' : 'No') + '\n\n' +
+                '"' + arg + '" Argument Description:\n\t' +
+                cmds[cmd].args[arg].desc + '\n\n' +
+                '"' + arg + '" Argument Type:\n\t' +
+                cmds[cmd].args[arg].type + '\n\n';
+        });
+        
+        helpStr += 'Syntax:\n\t' + cmd + ' \'JSON-encoded arguments object\' ' +
+            (requiresInput ? '\'JSON-encoded ' + cmds[cmd].input.type + ' input\'' : '');
+    } else if (requiresInput) {
+        helpStr += 'Syntax:\n\t' + cmd +
+            ' \'JSON-encoded ' + cmds[cmd].input.type + ' input\'';
+    } else {
+        helpStr += 'Syntax:\n\t' + cmd;
+    }
+    
+    console.log(helpStr);
+    process.exit(0);
+}
+
+function listCommands(qualifier) {
+    if (typeof qualifier === 'string' &&
+        regex.listQualifier.test(qualifier)) {
+        console.log(Object.keys(cmds).filter(function(cmd) {
+            return new RegExp(
+                qualifier.replace(regex.listQualifierDot, '\\.')).test(cmd);
+        }).map(function(cmd) {
+            return cmd + ':\n\t' + cmds[cmd].desc;
+        }).join('\n\n'));
+    } else {
+        console.log(Object.keys(cmds).map(function(cmd) {
+            return cmd + ':\n\t' + cmds[cmd].desc;
+        }).join('\n\n'));
+    }
     
     process.exit(0);
 }
@@ -65,8 +125,9 @@ function buildPipe(args, callback) {
             cmdFn,
             args,
             input;
-        
-        if (!validCommand(cmdName)) {
+        if (cmdName === 'list') {
+            listCommands(cmd[1]);
+        } else if (!validCommand(cmdName)) {
             bugOut('Invalid command name "' + cmdName + '"');
         } else if (cmds[cmdName].cmd.hasOwnProperty('all')) {
             cmdFn = cmds[cmdName].cmd.all;

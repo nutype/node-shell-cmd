@@ -32,7 +32,7 @@ var fs = require('fs'),
     // * 2008
     // * 2003
     platformDist = '',
-    platform64bit = false,
+    platform64bit = os.arch() === 'x64',
     regex = {
         cmdName: /^[a-z.]+$/,
         windowsLinebreak: /\r/g,
@@ -41,7 +41,12 @@ var fs = require('fs'),
         backslash: /\\/g,
         lsblkDiskInfo: /^\s+SIZE\s+STATE\s+PHY-SEC/,
         windowsPhysDrive: /^\\\\\.\\PHYSICALDRIVE\d+$/,
-        doubleQuote: /"/g
+        windowsDriveLetter: /^[A-Z]:$/,
+        doubleQuote: /"/g,
+        disk: /^disk/,
+        cdrom: /^cd/,
+        listQualifier: /^[a-z.]+$/,
+        listQualifierDot: /\./g
     },
     cmds = {};
     

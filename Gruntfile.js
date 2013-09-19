@@ -21,6 +21,7 @@ module.exports = function(grunt) {
         'src/is/disk.js',
         'src/is/fifo.js',
         'src/is/file.js',
+        'src/is/opticalDrive.js',
         'src/is/root.js',
         'src/is/socket.js',
         'src/is/symlink.js',

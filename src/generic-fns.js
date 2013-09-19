@@ -149,12 +149,18 @@ function validArgument(cmd, argName, input, callback) {
 
 function execCommand(cmd, callback, callbackError) {
     exec(cmd, function(err, stdout, stderr) {
-        if (err !== null ||
-            stderr.length > 0) {
+        if (err !== null) {
             callbackError({
                 err: err,
                 code: err.code,
                 signal: err.signal,
+                stderr: stderr
+            });
+        } else if (stderr.length > 0) {
+            callbackError({
+                err: null,
+                code: 1,
+                signal: 'SIGTERM',
                 stderr: stderr
             });
         } else {
