@@ -9,6 +9,7 @@ module.exports = function(grunt) {
         'src/arr/length.js',
         // disk
         'src/disk/info.js',
+        'src/disk/partitions.js',
         // disks
         // disks.all
         'src/disks/all/list.js',
