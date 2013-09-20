@@ -296,7 +296,7 @@ function buildPipe(args, callback) {
         if (!!cmds[cmdName].arg && // accepts single argument
             cmds[cmdName].arg.required) { // single argument required
             validCalls++;
-            validArgument(cmdName, null, cmd[2], function(isValid) {
+            validArgument(cmdName, null, cmd[1], function(isValid) {
                 validCallbacks++;
                 if (!isValid) {
                     bugOut('The provided single argument is not of ' +

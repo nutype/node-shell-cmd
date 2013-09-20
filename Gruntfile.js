@@ -7,6 +7,11 @@ module.exports = function(grunt) {
         'src/arr/first.js',
         'src/arr/last.js',
         'src/arr/length.js',
+        // convert
+        'src/convert/b/gb.js',
+        'src/convert/b/kb.js',
+        'src/convert/b/mb.js',
+        'src/convert/b/tb.js',
         // disk
         'src/disk/info.js',
         'src/disk/partitions.js',

@@ -46,7 +46,9 @@ var fs = require('fs'),
         disk: /^disk/,
         cdrom: /^cd/,
         listQualifier: /^[a-z.]+$/,
-        listQualifierDot: /\./g
+        listQualifierDot: /\./g,
+        luks: /^luks-/,
+        luns: /-lun-/
     },
     cmds = {};
     

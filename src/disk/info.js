@@ -17,7 +17,14 @@ cmds['disk.info'] = {
                             case 'DEVNAME': obj.devName = pair[1]; break;
                             case 'ID_VENDOR': obj.manf = pair[1]; break;
                             case 'ID_MODEL': obj.model = pair[1]; break;
-                            case 'ID_PATH': obj.devID = '/dev/disk/by-path/' + pair[1]; break;
+                            case 'ID_PATH':
+                                obj.devID = '/dev/disk/by-path/' + pair[1];
+                                if (regex.luns.test(pair[1])) { // attached to SAN
+                                    obj.attachedToSAN = true;
+                                } else {
+                                    obj.attachedToSAN = false;
+                                }
+                                break;
                         }
                         
                         if (regex.lsblkDiskInfo.test(kv)) {
@@ -37,7 +44,16 @@ cmds['disk.info'] = {
                         }
                     });
                     
-                    callback(obj);
+                    cmds['disk.partitions'].cmd.linux(null, obj.devName, function(parts) {
+                        obj.partitions = parts;
+                        obj.usedSpaceInBytes = 0;
+                        parts.forEach(function(part) {
+                            obj.usedSpaceInBytes += part.rawSizeInBytes;
+                        });
+                        obj.availableSpaceInBytes =
+                            obj.rawSizeInBytes - obj.usedSpaceInBytes;
+                        callback(obj);
+                    });
                 },
                 function (err) {
                     callback('Cannot execute disk.info command', true);

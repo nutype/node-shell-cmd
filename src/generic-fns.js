@@ -79,24 +79,16 @@ function validArgument(cmd, argName, input, callback) {
     
     switch (argObj.type) {
         case 'string':
-            setTimeout(function() {
-                callback(typeof input === 'string');
-            }, 0);
+            callback(typeof input === 'string');
             break;
         case 'array': 
-            setTimeout(function() {
-                callback(Array.isArray(input));
-            }, 0);
+            callback(Array.isArray(input));
             break;
         case 'number':
-            setTimeout(function() {
-                callback(typeof input === 'number');
-            }, 0);
+            callback(typeof input === 'number');
             break;
         case 'boolean':
-            setTimeout(function() {
-                callback(typeof input === 'boolean');
-            }, 0);
+            callback(typeof input === 'boolean');
             break;
         case 'blockDev':
             cmds['is.blockDev'].cmd[platform](null, input, function(result, err) {
@@ -181,4 +173,10 @@ function stdoutToArray(stdout, filters) {
                             return f.test(line);
                         });
                  });
+}
+
+function tokenize(str) {
+    return str.split(' ').filter(function(token) {
+        return token.length > 0;
+    });
 }
