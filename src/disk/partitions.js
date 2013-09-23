@@ -17,7 +17,8 @@ cmds['disk.partitions'] = {
                 stdoutToArray(stdout).forEach(function(part, idx, parts) {
                     partList.push({
                         lvm: false,
-                        encrypted: false
+                        encrypted: false,
+                        boot: false
                     });
                     
                     getBlockSize(part, idx);
@@ -59,6 +60,11 @@ cmds['disk.partitions'] = {
                                 case 'UDISKS_PARTITION_SIZE':
                                     partList[idx].rawSizeInBytes =
                                         parseInt(pair[1], 10); break;
+                                case 'UDISKS_PARTITION_FLAGS':
+                                    if (pair[1] === 'boot') {
+                                        partList[idx].boot = true;
+                                    }
+                                    break;
                             }
                         });
                         
@@ -77,7 +83,7 @@ cmds['disk.partitions'] = {
                             var tokens = tokenize(mnt);
                             if (tokens[0] === (lv.luks ? lv.luksDev : lv.lvDev)) {
                                 lv.rawSizeInBytes = parseInt(tokens[1], 10);
-                                lv.freeSpaceInBytes = parseInt(tokens[3], 10);
+                                lv.freeSpaceInBytes = parseInt(tokens[3], 10) * 1024;
                                 return true;
                             }
                         });
@@ -96,14 +102,25 @@ cmds['disk.partitions'] = {
                         partList[idx].freeSpaceInBytes = 0;
                         
                         if (!partList[idx].lvm) { // no lvm
-                            mounts.some(function(mnt) {
-                                var tokens = tokenize(mnt);
-                                if (tokens[0] === partList[idx].dev) {
-                                    partList[idx].freeSpaceInBytes =
-                                        parseInt(tokens[3], 10);
-                                    return true;
-                                }
-                            });
+                            if (!partList[idx].luks) { // no luks
+                                mounts.some(function(mnt) {
+                                    var tokens = tokenize(mnt);
+                                    if (tokens[0] === partList[idx].dev) {
+                                        partList[idx].freeSpaceInBytes =
+                                            parseInt(tokens[3], 10) * 1024;
+                                        return true;
+                                    }
+                                });
+                            } else { // luks
+                                mounts.some(function(mnt) {
+                                    var tokens = tokenize(mnt);
+                                    if (tokens[0] === partList[idx].luksDev) {
+                                        partList[idx].freeSpaceInBytes =
+                                            parseInt(tokens[3], 10) * 1024;
+                                        return true;
+                                    }
+                                });
+                            }
                         } else { // uses lvm
                             getLVMfreeSpace(idx, mounts);
                         }
@@ -151,6 +168,7 @@ cmds['disk.partitions'] = {
                         }
                         
                         if (idx === arr.length - 1) {
+                            part.lvmGroups[lvmInfo[0]].encrypted = false;
                             part.lvmGroups[lvmInfo[0]].push({
                                 luks: false,
                                 mount: tokens[3],
@@ -159,6 +177,7 @@ cmds['disk.partitions'] = {
                             });
                         } else if (tokenize(arr[idx + 1])[2] === 'crypt') {
                             var ctokens = tokenize(arr[idx + 1]);
+                            part.lvmGroups[lvmInfo[0]].encrypted = true;
                             part.lvmGroups[lvmInfo[0]].push({
                                 luks: true,
                                 luksUUID: ctokens[0],
@@ -191,9 +210,10 @@ cmds['disk.partitions'] = {
                             if (tokens[2] === 'lvm') { // lvm, could use encrypted volumes
                                 getLVMInfo(partList[idx], arr.slice(1));
                             } else if (tokens[2] === 'crypt') { // no lvm, uses luks
+                                partList[idx].encrypted = true;
                                 partList[idx].luks = true;
                                 partList[idx].luksUUID = tokens[0];
-                                partList[idx].luksDev = tokens[4];
+                                partList[idx].luksDev = '/dev/' + tokens[4];
                                 partList[idx].mount = tokens[3];
                             } else {
                                 callback('Unable to process mount information', true);
@@ -219,7 +239,125 @@ cmds['disk.partitions'] = {
                 });
         },
         windows: function(args, input, callback) {
+            var partList = [],
+                calls = 0;
+                
+            function getPartInfo(part) {
+                calls++;
+                execCommand('wmic partition where (DeviceID = "' +
+                    part.dev + '") list/format:value',
+                    function(stdout) {
+                        calls--;
+                        stdoutToArray(stdout).forEach(function(kv) {
+                            var pair = kv.split('=');
+                            
+                            switch (pair[0]) {
+                                case 'BlockSize':
+                                    part.blockSize = parseInt(pair[1], 10); break;
+                                case 'BootPartition':
+                                    if (pair[1] === 'TRUE') {
+                                        part.boot = true;
+                                    } else {
+                                        part.boot = false;
+                                    }
+                                    break;
+                                case 'NumberOfBlocks':
+                                    part.blocks = parseInt(pair[1], 10); break;
+                                case 'Size':
+                                    part.rawSizeInBytes = parseInt(pair[1], 10); break;
+                            }
+                        });
+                        
+                        if (calls === 0) {
+                            callback(partList);
+                        }
+                    },
+                    function(err) {
+                        callback('Error retrieving partition information', true);
+                    });
+            }
             
+            function logicalDiskToPartition() {
+                calls++;
+                execCommand('wmic path win32_logicaldisktopartition get /format:value',
+                    function(stdout) {
+                        calls--;
+                        stdoutToArray(stdout).forEach(function(str, idx, arr) {
+                            var parts = str.split('=');
+                            
+                            if (parts[0] === 'Antecedent') {
+                                var dev = parts[2].replace(regex.doubleQuote, ''),
+                                    mount = arr[idx + 1].split('=')[2].replace(regex.doubleQuote, '');
+                                
+                                partList.some(function(part, i) {
+                                    if (part.dev === dev) {
+                                        part.mount = mount;
+                                        logicalPartitionInfo(part);
+                                        return true;
+                                    }
+                                });
+                            }
+                        });
+                        
+                        if (calls === 0) {
+                            callback(partList);
+                        }
+                    },
+                    function(err) {
+                        callback('Cannot determine logical partitions', true);
+                    });             
+            }
+            
+            function logicalPartitionInfo(part) {
+                calls++;
+                execCommand('wmic logicaldisk where DeviceID="' +
+                    part.mount + '" list/format:value',
+                    function(stdout) {
+                        calls--;
+                        stdoutToArray(stdout).forEach(function(kv) {
+                            var pair = kv.split('=');
+                            
+                            switch (pair[0]) {
+                                case 'FileSystem':
+                                    part.fs = pair[1]; break;
+                                case 'FreeSpace':
+                                    part.freeSpaceInBytes = parseInt(pair[1], 10); break;
+                            }
+                        });
+                        
+                        if (calls === 0) {
+                            callback(partList);
+                        }
+                    },
+                    function(err) {
+                        callback('Cannot gather logical disk information', true);
+                    });
+            }
+                
+            execCommand('wmic path win32_diskdrivetodiskpartition get /format:value',
+                function(stdout) {                    
+                    stdoutToArray(stdout).forEach(function(str, idx, arr) {
+                        var parts = str.split('=');
+                        if (parts[0] === 'Antecedent' &&
+                            '"' + input + '""' === parts[2]) {
+                            partList.push({
+                                lvm: false,
+                                encrypted: false,
+                                freeSpaceInBytes: 0,
+                                dev: arr[idx + 1].split('=')[2].replace(regex.doubleQuote, '')
+                            });
+                        }
+                    });
+                        
+                    partList.forEach(function(part, idx) {
+                        getPartInfo(part);
+                    });
+                    
+                    logicalDiskToPartition();
+                },
+                function(err) {
+                    callback('Cannot execute disk.info command', true);
+                });
         }
     }
 };
