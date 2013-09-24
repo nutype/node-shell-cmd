@@ -154,10 +154,12 @@ function buildPipe(args, callback) {
                 return [cmdFn, undefined, undefined];
             } else if (cmd.length === 2) { // cmd.name args|input
                 if (!!cmdArg &&
-                    !!cmdArg.required) {
+                    !!cmdArg.required &&
+                    !!cmdInput) {
                     bugOut('The command "' + cmdName + '" requires a single "' +
                         cmdArg.type + '" argument');
                 } else if (!!cmdArgs &&
+                    !!cmdInput &&
                     Object.keys(cmdArgs).some(function(arg) {
                         return !!cmdArgs[arg].required;
                     })) {
@@ -173,10 +175,15 @@ function buildPipe(args, callback) {
                         cmdName + '"');
                 }
                 
+                if (!!cmdArg ||
+                    !!cmdArgs) {
+                    args = input;
+                }
+                
                 if (typeof cmdInput === 'undefined') {
-                    return [cmdFn, undefined, undefined];
+                    return [cmdFn, args, undefined];
                 } else {
-                    return [cmdFn, undefined, input];
+                    return [cmdFn, args, input];
                 }
             } else { // cmd.name args input
                 try {
@@ -306,6 +313,10 @@ function buildPipe(args, callback) {
                 }
             });
         } else if (!!cmds[cmdName].args) { // accepts multiple arguments
+            if (typeof cmd[1] !== 'object') {
+                bugOut('Invalid arguments object for command "' + cmdName + '"');
+            }
+            
             Object.keys(cmd[1]).forEach(function(arg) {
                 validCalls++;
                 validArgument(cmdName, arg, cmd[1][arg], function(isValid) {

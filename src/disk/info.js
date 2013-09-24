@@ -91,6 +91,12 @@ cmds['disk.info'] = {
                     
                     cmds['disk.partitions'].cmd.windows(null, obj.devName, function(parts) {
                         obj.partitions = parts;
+                        obj.usedSpaceInBytes = 0;
+                        parts.forEach(function(part) {
+                            obj.usedSpaceInBytes += part.rawSizeInBytes;
+                        });
+                        obj.availableSpaceInBytes =
+                            obj.rawSizeInBytes - obj.usedSpaceInBytes;
                         callback(obj);
                     });
                 }, function(err) {

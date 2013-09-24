@@ -4,6 +4,7 @@
 var fs = require('fs'),
     os = require('os'),
     exec = require('child_process').exec,
+    spawn = require('child_process').spawn,
     platform = (function() {
         switch (os.type()) {
             case 'Windows_NT': return 'windows';
@@ -43,12 +44,15 @@ var fs = require('fs'),
         windowsPhysDrive: /^\\\\\.\\PHYSICALDRIVE\d+$/,
         windowsDriveLetter: /^[A-Z]:$/,
         doubleQuote: /"/g,
+        singleQuote: /'/g,
         disk: /^disk/,
         cdrom: /^cd/,
         listQualifier: /^[a-z.]+$/,
         listQualifierDot: /\./g,
         luks: /^luks-/,
-        luns: /-lun-/
+        luns: /-lun-/,
+        whitespace: /\s+/g,
+        specialDelim: /#@%/g
     },
     cmds = {};
     

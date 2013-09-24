@@ -12,7 +12,13 @@ module.exports = function(grunt) {
         'src/convert/b/kb.js',
         'src/convert/b/mb.js',
         'src/convert/b/tb.js',
+        // dialog
+        'src/dialog/checklist.js',
+        'src/dialog/inputbox.js',
+        'src/dialog/menu.js',
+        'src/dialog/radiolist.js',
         // disk
+        'src/disk/availableSpaceInBytes.js',
         'src/disk/info.js',
         'src/disk/partitions.js',
         // disks

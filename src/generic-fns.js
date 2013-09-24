@@ -15,11 +15,21 @@ function validWindowsDisk(disk) {
 
 function validInput(cmd, input, callback) {
     switch (cmds[cmd].input.type) {
-        case 'string': callback(typeof input === 'string'); break;
-        case 'array': callback(Array.isArray(input)); break;
-        case 'object': callback(typeof input === 'object'); break;
-        case 'number': callback(typeof input === 'number'); break;
-        case 'boolean': callback(typeof input === 'boolean'); break;
+        case 'string': setTimeout(function() {
+            callback(typeof input === 'string');},0);
+            break;
+        case 'array': setTimeout(function() {
+            callback(Array.isArray(input));}, 0);
+            break;
+        case 'object': setTimeout(function() {
+            callback(typeof input === 'object');}, 0);
+            break;
+        case 'number': setTimeout(function() {
+            callback(typeof input === 'number');}, 0);
+            break;
+        case 'boolean': setTimeout(function() {
+            callback(typeof input === 'boolean');}, 0);
+            break;
         case 'blockDev':
             cmds['is.blockDev'].cmd[platform](null, input, function(result, err) {
                 if (!err) {
@@ -79,16 +89,20 @@ function validArgument(cmd, argName, input, callback) {
     
     switch (argObj.type) {
         case 'string':
-            callback(typeof input === 'string');
+            setTimeout(function() {
+                callback(typeof input === 'string');}, 0);
             break;
         case 'array': 
-            callback(Array.isArray(input));
+            setTimeout(function() {
+                callback(Array.isArray(input));}, 0);
             break;
         case 'number':
-            callback(typeof input === 'number');
+            setTimeout(function() {
+                callback(typeof input === 'number');}, 0);
             break;
         case 'boolean':
-            callback(typeof input === 'boolean');
+            setTimeout(function() {
+                callback(typeof input === 'boolean');}, 0);
             break;
         case 'blockDev':
             cmds['is.blockDev'].cmd[platform](null, input, function(result, err) {
@@ -161,6 +175,26 @@ function execCommand(cmd, callback, callbackError) {
     });
 }
 
+function execDialogCmd(cmdArgs, callback, callbackError) {
+    var dialog = spawn('dialog',
+        ['--ascii-lines','--stderr'].concat(cmdArgs),
+        {stdio: ['ignore', process.stdout, 'pipe']}),
+        result; 
+    
+    dialog.stderr.setEncoding('utf8');
+    dialog.stderr.on('data', function(data) {
+        result = data;
+    });
+    
+    dialog.on('error', function(err) {
+        callbackError(err);
+    });
+    
+    dialog.on('close', function(code) {
+        callback(code, result);
+    });
+}
+
 function stdoutToArray(stdout, filters) {
     filters = (Array.isArray(filters) ? filters : []);
     
@@ -178,5 +212,21 @@ function stdoutToArray(stdout, filters) {
 function tokenize(str) {
     return str.split(' ').filter(function(token) {
         return token.length > 0;
+    });
+}
+
+function verifyObject(obj, input) {
+    return !Object.keys(obj).some(function(prop) {
+        if (!input.hasOwnProperty(prop)) {
+            return true;
+        } else {
+            switch (obj[prop]) {
+                case 'number': return typeof input[prop] !== 'number';
+                case 'object': return typeof input[prop] !== 'object';
+                case 'array': return !Array.isArray(input[prop]);
+                case 'string': return typeof input[prop] !== 'string';
+                case 'boolean': return typeof input[prop] !== 'boolean';
+            }
+        }
     });
 }
