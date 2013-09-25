@@ -16,7 +16,9 @@ module.exports = function(grunt) {
         'src/dialog/checklist.js',
         'src/dialog/inputbox.js',
         'src/dialog/menu.js',
+        'src/dialog/msgbox.js',
         'src/dialog/radiolist.js',
+        'src/dialog/yesno.js',
         // disk
         'src/disk/availableSpaceInBytes.js',
         'src/disk/info.js',
@@ -64,6 +66,7 @@ module.exports = function(grunt) {
                     'src/generic-fns.js',
                     'src/lib-fns.js'
                 ].concat(cmds).concat([
+                    'src/lib-footer.js',
                     'src/platform-info.js',
                     'src/footer.js'
                 ]),

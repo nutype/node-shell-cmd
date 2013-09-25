@@ -101,6 +101,48 @@ $ node-shell-cmd list disks.all
 $ node-shell-cmd list arr.
 ```
 
+## Using The Node.js Module
+
+Until the module gets published to NPM, follow these steps:
+
+1. Download the module [file](https://raw.github.com/nutype/node-shell-cmd/master/lib/node-shell-cmd.js)
+2. Add a `require` statement like so: `var shell = require('/path/to/node-shell-cmd.js');`
+3. You can only call one command at a time using the `callCmd` exported function and you *must* provide the following arguments: `cmdName, args, input, callback`
+4. The callback, when called, is provided with two arguments: `result`, and `err`.  The result is contingent on whether or not `err` is _true_; if it's _true_, then `result` is the error message string, otherwise if it's _false_, _null_, or _undefined_, then `result` is the final result of the command.  You should *always* check to see whether or not the command completed successfully by checking the value of `err` and responding accordingly
+
+Here are some examples:
+
+```javascript
+var shell = require('/path/to/node-shell-cmd.js');
+
+shell.callCmd('is.root', null, null, function(isRoot, err) {
+    if (!err && isRoot) {
+        // do root-level commands
+    } else {
+        console.error('You need to be root to run this utility');
+        process.exit(1);
+    }
+});
+
+shell.callCmd('disks.all.list', null, null, function(disks, err) {
+    if (!err) {
+        disks.forEach(function(disk) {
+            shell.callCmd('disk.info', null, disk, function(info, err) {
+                // process disk info
+            });
+        });
+    } else {
+        console.error('Error getting disk information: ' + disks);
+    }
+});
+```
+
+The `node-shell-cmd` module `callCmd` exported function will *always* fail gracefully in the event of any errors by setting the `err` parameter in the `callback` function to _true_.  This way, you can easily detect and respond to any errors gracefully.
+
+However, there is only *one* instance when you cannot rely on the callback method, which is if you don't specify a callback function, in which case the `node-shell-cmd` module will simply perform a standard `console.error` and indicate which command was called without a callback function.  You will need to capture these messages sent to standard error in order to catch these types of errors as part of your debugging and testing processes.
+
+Also, if you supply missing or incorrect arguments/input to a command, then `err` will be set to _true_ and the error message will indicate what you failed to provide correctly to the command.
+
 ## Development
 
 ### Basic Structure of Commands
