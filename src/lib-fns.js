@@ -37,7 +37,7 @@ function checkArgs(cmdName, args, input, callback) {
     } else {
         // see if missing required argument
         if (Object.keys(cmds[cmdName].args).some(function(arg) {
-            if (cmds[cmdName][arg].required &&
+            if (cmds[cmdName].args[arg].required &&
                 typeof args[arg] === 'undefined') {
                 callback('Missing required argument "' + arg + '" for command "' +
                     cmdName + '"', true);
@@ -56,7 +56,7 @@ function checkArgs(cmdName, args, input, callback) {
                     callback('Invalid argument value specified for argument "' +
                         arg + '" for command "' + cmdName + '"', true);
                 } else if (calls === 0) {
-                    if (!!cmds[cmdName].call.all) {
+                    if (!!cmds[cmdName].all) {
                         cmds[cmdName].cmd.all(args, input, callback);
                     } else {
                         cmds[cmdName].cmd[platform](args, input, callback);

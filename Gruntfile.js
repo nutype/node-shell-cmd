@@ -14,6 +14,7 @@ module.exports = function(grunt) {
         'src/convert/b/tb.js',
         // dialog
         'src/dialog/checklist.js',
+        'src/dialog/infobox.js',
         'src/dialog/inputbox.js',
         'src/dialog/menu.js',
         'src/dialog/msgbox.js',
@@ -26,6 +27,8 @@ module.exports = function(grunt) {
         // disks
         // disks.all
         'src/disks/all/list.js',
+        // disks.nonsan
+        'src/disks/nonsan/list.js',
         // disks.local
         'src/disks/local/list.js',
         // is
@@ -84,7 +87,7 @@ module.exports = function(grunt) {
                 mode: '755'
             },
             'node-shell-cmd': {
-                src: ['build/node-shell-cmd']
+                src: ['bin/node-shell-cmd']
             }
         }
     });

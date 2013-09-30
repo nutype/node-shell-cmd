@@ -788,6 +788,43 @@ cmds['dialog.checklist'] = {
         }
     }
 };
+cmds['dialog.infobox'] = {
+    desc: 'Simple infobox dialog box',
+    args: {
+        msg: {
+            type: 'string',
+            desc: 'The message to display to the user.',
+            required: true
+        }
+    },
+    cmd: {
+        linux: function(args, input, callback) {
+            var height = 5,
+                width = 40;
+                
+            if (args.msg.length === 0) {
+                callback('Infobox message cannot be empty', true);
+                return;
+            } else {
+                height += Math.floor(args.msg.length / 30); 
+            }
+
+            execDialogCmd([
+                '--infobox',
+                args.msg,
+                height,
+                width],
+                function(code, result) { 
+                    callback({
+                        ok: (code === 0 ? true : false)
+                    });
+                },
+                function(err) {
+                    callback('Error executing dialog command', true);
+                });
+        }
+    }
+};
 cmds['dialog.inputbox'] = {
     desc: 'Simple inputbox dialog box',
     args: {
@@ -1053,11 +1090,18 @@ cmds['disk.info'] = {
             execCommand('udevadm info -q property -n ' + input + ' && ' +
                 'lsblk -l -b -d -o SIZE,STATE,PHY-SEC ' + input,
                 function(stdout) {
-                    var obj = {};
+                    var obj = {
+                        usb: false,
+                        uuid: ''
+                    };
                     stdout.split('\n').forEach(function(kv, idx, arr) {
                         var pair = kv.split('=');
                         
                         switch (pair[0]) {
+                            case 'ID_BUS':
+                                obj.usb = pair[1] === 'usb' ? true : false;
+                                break;
+                            case 'UUID': obj.uuid = pair[1]; break;
                             case 'DEVNAME': obj.devName = pair[1]; break;
                             case 'ID_VENDOR': obj.manf = pair[1]; break;
                             case 'ID_MODEL': obj.model = pair[1]; break;
@@ -1544,6 +1588,18 @@ cmds['disks.all.list'] = {
         }
     }
 };
+cmds['disks.nonsan.list'] = {
+    desc: 'Returns all disks which are not SAN LUNs.',
+    cmd: {
+        linux: function(args, input, callback) {
+            cmds['disks.all.list'].cmd.linux(null, null, function(disks) {
+                callback(disks.filter(function(disk) {
+                    return !regex.luns.test(disk);
+                }));
+            });
+        }
+    }
+};
 cmds['is.blockDev'] = {
     desc: 'Determines if the provided input is a valid block device.',
     input: {
@@ -1856,7 +1912,8 @@ switch (platform) {
                         platformInfoReady();
                     },
                     function(err) {
-                        bugOut('Cannot determine Linux platform info.');
+                        //bugOut('Cannot determine Linux platform info.');
+                        platformInfoReady();
                     });
             });
         break;

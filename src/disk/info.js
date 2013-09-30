@@ -9,11 +9,18 @@ cmds['disk.info'] = {
             execCommand('udevadm info -q property -n ' + input + ' && ' +
                 'lsblk -l -b -d -o SIZE,STATE,PHY-SEC ' + input,
                 function(stdout) {
-                    var obj = {};
+                    var obj = {
+                        usb: false,
+                        uuid: ''
+                    };
                     stdout.split('\n').forEach(function(kv, idx, arr) {
                         var pair = kv.split('=');
                         
                         switch (pair[0]) {
+                            case 'ID_BUS':
+                                obj.usb = pair[1] === 'usb' ? true : false;
+                                break;
+                            case 'UUID': obj.uuid = pair[1]; break;
                             case 'DEVNAME': obj.devName = pair[1]; break;
                             case 'ID_VENDOR': obj.manf = pair[1]; break;
                             case 'ID_MODEL': obj.model = pair[1]; break;

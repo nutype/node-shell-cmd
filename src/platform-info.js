@@ -61,7 +61,8 @@ switch (platform) {
                         platformInfoReady();
                     },
                     function(err) {
-                        bugOut('Cannot determine Linux platform info.');
+                        //bugOut('Cannot determine Linux platform info.');
+                        platformInfoReady();
                     });
             });
         break;
